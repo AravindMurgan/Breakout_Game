@@ -5,12 +5,13 @@ const rules = document.getElementById('rules');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
  
-let score = 0;
+let score = 0; ///--Inital Score
 
+////////////////////////////////// - Row and Column Count
 const bricksRowCount = 9;
 const bricksColumnCount = 5;
 
-
+////////////////////////////////////////////////////////// - Property of Ball,Paddle and Bricks
 ///brick props///
 const bricksInfo = {
     w:70,
@@ -42,6 +43,7 @@ const paddle = {
     dx: 0
   };
   
+/////////////////////////////////////////////////////////////  
 //create bricks//
     const bricks = [];
     // Row Bricks
@@ -57,6 +59,24 @@ const paddle = {
         
 
     }
+
+//drawBricks//
+function drawBricks(){
+
+    bricks.forEach((column)=>{
+        column.forEach((brick)=>{
+            ctx.beginPath();
+            ctx.rect(brick.x,brick.y,brick.w,brick.h);
+            ctx.fillStyle = brick.visible ? '#0095dd' : 'transparent';
+            ctx.fill();
+            ctx.closePath();
+
+        })
+
+    })
+
+   
+}    
 
 //Draw Ball///
 function drawBall(){
@@ -82,23 +102,7 @@ function drawScore(){
     ctx.fillText(`Score : ${score}`,canvas.width-100,30);
 }
 
-//drawBricks//
-function drawBricks(){
 
-    bricks.forEach((column)=>{
-        column.forEach((brick)=>{
-            ctx.beginPath();
-            ctx.rect(brick.x,brick.y,brick.w,brick.h);
-            ctx.fillStyle = brick.visible ? '#0095dd' : 'transparent';
-            ctx.fill();
-            ctx.closePath();
-
-        })
-
-    })
-
-   
-}
 
 ///MovePaddle from X->Y & Y->X
 function movePaddle(){
@@ -113,10 +117,78 @@ function movePaddle(){
 
 }
 
+///move ball
+function moveBall(){
+    ball.x += ball.dx;
+    ball.y +=ball.dy;
+
+    //canvas collision (right & left)
+    if(ball.x + ball.size > canvas.width || ball.x - ball.size < 0){
+        ball.dx *= -1;
+    }
+
+    //canvas collision (top & bottom).
+    if(ball.y + ball.size > canvas.height || ball.y - ball.size < 0){
+        ball.dy *= -1;
+    }
+
+
+    //paddle collision/
+    if(ball.x - ball.size > paddle.x && ball.x + ball.size < paddle.x + 
+        paddle.w && ball.y + ball.size > paddle.y){
+            ball.dy = -ball.speed;
+        }
+    
+    ////bricks collision//
+    bricks.forEach((column)=>{
+        column.forEach((brick)=>{
+
+            if(brick.visible){
+               if(ball.x - ball.size > brick.x &&
+                ball.x + ball.size < brick.x + brick.w &&
+                ball.y + ball.size > brick.y &&
+                ball.y - ball.size < brick.y + brick.h ){
+
+                    ball.dy *= -1;
+                    brick.visible = false;
+                    increaseScore();
+                }
+                
+            }
+
+            
+        })
+    })
+
+    //Hit-Bottom = you lose
+    if(ball.y + ball.size > canvas.height){
+        showAllBricks();
+        score = 0;
+    }
+}
+
+//Increase Score//
+function increaseScore(){
+    score ++;
+
+    if(score % (bricksRowCount * bricksRowCount) === 0){
+        showAllBricks();
+    }
+}
+
+//Show All Bricks//
+function showAllBricks(){
+    
+    bricks.forEach((column)=> column.forEach((brick)=>brick.visible = true));
+}
+
+
+
 //calling all Function//
 function draw(){
     //clear canvas//
-    ctx.clearRect(0,0,canvas.width,canvas.height)
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    
 
     drawBall();
     drawPaddle();
@@ -129,11 +201,15 @@ function update(){
 
     //move paddle//
     movePaddle();
+    //move ball//
+    moveBall();
+    
+    console.log(ball.x,ball.y)
 
     //calling all funciton at one function//
     draw();
 
-    requestAnimationFrame(update)
+    // requestAnimationFrame(update)
 
 }
 
